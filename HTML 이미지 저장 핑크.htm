@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML → Image</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/sunghyunzz/eulyoo1945/eulyoo1945.css');
+
+  :root {
+    --bg: #fff7fb;
+    --panel: #ffffff;
+    --ink: #4a3340;
+    --muted: #8b6f7d;
+    --accent: #ff8fc1;
+    --accent-soft: #ffe1ef;
+    --border: #ffd1e5;
+    --shadow: 0 18px 50px rgba(255, 143, 193, 0.22);
+    --radius: 24px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 143, 193, 0.32), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(180, 218, 255, 0.38), transparent 34%),
+      var(--bg);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  button { border: 0; cursor: pointer; font: inherit; transition: transform 0.15s ease, opacity 0.15s ease; }
+  button:hover { transform: translateY(-1px); }
+  button:active { transform: translateY(0); opacity: 0.88; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: rgba(255, 255, 255, 0.72);
+    border-bottom: 1px solid rgba(255, 209, 229, 0.7);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 0 22px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(255, 143, 193, 0.1);
+  }
+
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -0.04em;
+    margin-right: 6px;
+    white-space: nowrap;
+  }
+
+  .topbar-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .bg-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── BG BUTTONS ── */
+  .bg-btn {
+    height: 32px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--accent-soft);
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--ink);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: none;
+    transition: transform 0.15s ease, opacity 0.15s ease, background 0.12s, color 0.12s, border-color 0.12s, box-shadow 0.12s;
+  }
+
+  .bg-btn:hover { transform: translateY(-1px); }
+  .bg-btn:active { transform: translateY(0); opacity: 0.88; }
+
+  .bg-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 6px 16px rgba(255, 143, 193, 0.38);
+  }
+
+  .bg-swatch {
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(74, 51, 64, 0.15);
+    flex-shrink: 0;
+  }
+
+  .checkerboard-swatch {
+    background-image:
+      linear-gradient(45deg, #ccc 25%, transparent 25%),
+      linear-gradient(-45deg, #ccc 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #ccc 75%),
+      linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    background-size: 7px 7px;
+    background-position: 0 0, 0 3.5px, 3.5px -3.5px, -3.5px 0px;
+    background-color: #fff;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ── SAVE BUTTON ── */
+  .save-btn {
+    margin-left: auto;
+    height: 34px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 8px 20px rgba(255, 143, 193, 0.38);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* ── LAYOUT ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  /* ── EDITOR PANEL ── */
+  .editor-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 50%;
+    flex-shrink: 0;
+    padding: 18px;
+    gap: 10px;
+    border-right: 1px solid rgba(255, 209, 229, 0.6);
+  }
+
+  .panel-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .editor-box {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+  }
+
+  .line-numbers {
+    padding: 14px 10px 14px 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #cdb5c3;
+    text-align: right;
+    background: rgba(255, 241, 248, 0.6);
+    border-right: 1px solid rgba(255, 209, 229, 0.5);
+    user-select: none;
+    overflow: hidden;
+    min-width: 42px;
+    flex-shrink: 0;
+    border-radius: 20px 0 0 20px;
+  }
+
+  #code-editor {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    background: transparent;
+    padding: 14px 16px;
+    tab-size: 2;
+    overflow: auto;
+    white-space: pre;
+    caret-color: var(--accent);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    border-radius: 0 20px 20px 0;
+  }
+
+  #code-editor::-webkit-scrollbar { display: none; }
+  #code-editor::selection { background: rgba(255, 143, 193, 0.22); }
+  #code-editor::placeholder { color: #cdb5c3; }
+
+  /* ── PREVIEW PANEL ── */
+  .preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 18px;
+    gap: 10px;
+  }
+
+  .preview-box {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    scrollbar-width: none;
+  }
+
+  .preview-box::-webkit-scrollbar { display: none; }
+
+  .preview-inner { position: relative; min-width: 100px; min-height: 60px; max-width: 100%; }
+
+  .checkerboard {
+    background-image:
+      linear-gradient(45deg, rgba(255,209,229,0.6) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(255,209,229,0.6) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(255,209,229,0.6) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(255,209,229,0.6) 75%);
+    background-size: 14px 14px;
+    background-position: 0 0, 0 7px, 7px -7px, -7px 0px;
+    background-color: #fff9fc;
+  }
+
+  #preview-content { min-width: 60px; min-height: 40px; display: inline-block; }
+
+  .panel-label-right { justify-content: space-between; }
+  .size-info {
+    font-size: 11px;
+    color: #cdb5c3;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.22s cubic-bezier(.22,.8,.46,1);
+    pointer-events: none;
+    z-index: 9999;
+    white-space: nowrap;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 8px 28px rgba(255, 143, 193, 0.25);
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── SAVING OVERLAY ── */
+  .saving-overlay {
+    position: fixed; inset: 0;
+    background: rgba(255, 247, 251, 0.65);
+    display: none; align-items: center; justify-content: center;
+    z-index: 9998;
+    font-size: 14px; color: var(--muted); gap: 10px; font-weight: 700;
+    backdrop-filter: blur(6px);
+  }
+  .saving-overlay.show { display: flex; }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    .topbar { flex-wrap: wrap; height: auto; padding: 10px 14px; gap: 8px; }
+    .topbar-title { width: 100%; margin-bottom: 2px; }
+    .topbar-sep { display: none; }
+    .bg-btn { flex: 1; min-width: 72px; justify-content: center; }
+    .save-btn { width: 100%; margin-left: 0; justify-content: center; }
+    .main { flex-direction: column; overflow: visible; }
+    .editor-panel { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,209,229,0.6); min-height: 50vh; }
+    .preview-panel { min-height: 50vh; }
+    .editor-box { min-height: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-title">HTML → Image ✦</span>
+  <div class="topbar-sep"></div>
+  <span class="bg-label">배경</span>
+
+  <button class="bg-btn active" id="btn-white" onclick="setBg('white')">
+    <span class="bg-swatch" style="background:#fff"></span> 흰색
+  </button>
+  <button class="bg-btn" id="btn-black" onclick="setBg('black')">
+    <span class="bg-swatch" style="background:#1a1a1a"></span> 검은색
+  </button>
+  <button class="bg-btn" id="btn-caveduck" onclick="setBg('caveduck')">
+    <span class="bg-swatch" style="background:#1A1B1B"></span> 케이브덕
+  </button>
+  <button class="bg-btn" id="btn-transparent" onclick="setBg('transparent')">
+    <span class="checkerboard-swatch"></span> 투명
+  </button>
+  <button class="bg-btn" id="btn-custom" onclick="document.getElementById('customColor').click()">
+    <span class="bg-swatch" id="custom-swatch" style="background:#b4daff"></span> 색상 지정
+  </button>
+  <input type="color" id="customColor" style="position:absolute;width:0;height:0;opacity:0;" value="#b4daff" oninput="setCustomBg(this.value)">
+
+  <div class="topbar-sep"></div>
+
+  <button class="save-btn" id="saveBtn" onclick="saveImage()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+      <polyline points="7 11 12 16 17 11"/>
+      <line x1="12" y1="4" x2="12" y2="16"/>
+    </svg>
+    이미지 저장
+  </button>
+</div>
+
+<div class="main">
+  <div class="editor-panel">
+    <div class="panel-label">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.6">
+        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+      </svg>
+      HTML 코드
+    </div>
+    <div class="editor-box">
+      <div class="line-numbers" id="line-numbers">1</div>
+      <textarea id="code-editor" spellcheck="false" placeholder="여기에 HTML 코드를 입력하세요..."></textarea>
+    </div>
+  </div>
+
+  <div class="preview-panel">
+    <div class="panel-label panel-label-right">
+      <span style="display:flex;align-items:center;gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.6">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        미리보기
+      </span>
+      <span class="size-info" id="size-info"></span>
+    </div>
+    <div class="preview-box">
+      <div class="preview-inner" id="preview-inner">
+        <div id="preview-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="saving-overlay" id="savingOverlay">
+  <div class="spinner"></div>
+  <span>이미지 저장 중...</span>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  let currentBg = 'white';
+  let customColor = '#b4daff';
+  let renderTimer = null;
+
+  const editor = document.getElementById('code-editor');
+  const lineNumbers = document.getElementById('line-numbers');
+  const previewContent = document.getElementById('preview-content');
+  const previewInner = document.getElementById('preview-inner');
+  const sizeInfo = document.getElementById('size-info');
+
+  const defaultHTML = `<div style="padding: 48px 56px; background: linear-gradient(135deg, #ffb3d4 0%, #b4daff 100%); border-radius: 28px; color: #4a3340; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; text-align: center; box-shadow: 0 24px 64px rgba(255,143,193,0.35);">
+  <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
+  <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.05em;">HTML → 이미지 에디터</h1>
+  <p style="font-size: 1rem; opacity: 0.75; line-height: 1.65;">왼쪽에 HTML 코드를 입력하면<br>그대로 이미지로 저장됩니다</p>
+</div>`;
+
+  function updateLineNumbers() {
+    const count = editor.value.split('\n').length;
+    lineNumbers.innerHTML = Array.from({length: count}, (_, i) => i + 1).join('<br>');
+  }
+
+  editor.addEventListener('scroll', () => { lineNumbers.scrollTop = editor.scrollTop; });
+
+  editor.value = defaultHTML;
+  updateLineNumbers();
+  renderPreview();
+
+  editor.addEventListener('input', () => {
+    updateLineNumbers();
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderPreview, 300);
+  });
+
+  editor.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = editor.selectionStart, end = editor.selectionEnd;
+      editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(end);
+      editor.selectionStart = editor.selectionEnd = s + 2;
+      updateLineNumbers();
+    }
+  });
+
+  function renderPreview() {
+    previewContent.innerHTML = editor.value.trim();
+    setTimeout(() => {
+      const w = previewContent.offsetWidth, h = previewContent.offsetHeight;
+      if (w > 0 && h > 0) sizeInfo.textContent = `${w} × ${h}px`;
+    }, 100);
+  }
+
+  function setBg(type) {
+    currentBg = type;
+    document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + type).classList.add('active');
+    applyBg();
+  }
+
+  function setCustomBg(color) {
+    customColor = color;
+    document.getElementById('custom-swatch').style.background = color;
+    currentBg = 'custom';
+    document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-custom').classList.add('active');
+    applyBg();
+  }
+
+  function applyBg() {
+    previewContent.style.background = '';
+    previewInner.classList.remove('checkerboard');
+    if (currentBg === 'white')       previewContent.style.background = '#ffffff';
+    else if (currentBg === 'black')  previewContent.style.background = '#1a1a1a';
+    else if (currentBg === 'caveduck') previewContent.style.background = '#1A1B1B';
+    else if (currentBg === 'transparent') {
+      previewContent.style.background = 'transparent';
+      previewInner.classList.add('checkerboard');
+    }
+    else if (currentBg === 'custom') previewContent.style.background = customColor;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function saveImage() {
+    const btn = document.getElementById('saveBtn');
+    const overlay = document.getElementById('savingOverlay');
+    if (!editor.value.trim()) { showToast('⚠️ HTML 코드를 입력해주세요'); return; }
+
+    btn.disabled = true;
+    overlay.classList.add('show');
+
+    const bgColor =
+      currentBg === 'transparent' ? null :
+      currentBg === 'white'       ? '#ffffff' :
+      currentBg === 'black'       ? '#1a1a1a' :
+      currentBg === 'caveduck'    ? '#1A1B1B' : customColor;
+
+    htmlToImage.toPng(previewContent, { backgroundColor: bgColor, pixelRatio: 2 })
+      .then(dataUrl => {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'image_' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('✅ 이미지가 저장되었습니다');
+      })
+      .catch(err => {
+        console.error(err);
+        showToast('❌ 저장 중 오류가 발생했습니다');
+      })
+      .finally(() => {
+        btn.disabled = false;
+        overlay.classList.remove('show');
+      });
+  }
+
+  applyBg();
+</script>
+</body>
+</html>
